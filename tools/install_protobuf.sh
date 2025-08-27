@@ -85,12 +85,16 @@ cd "$PROTOBUF_DIR/python"
 $PYTHON_EXECUTABLE setup.py clean
 $PYTHON_EXECUTABLE setup.py build
 
-
 ####################################################################
 # Check write access to Python package dir
 ####################################################################
 PYTHON_PACKAGE_DIR=$($PYTHON_EXECUTABLE -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())")
-if [ ! -w $PYTHON_PACKAGE_DIR ]; then
+# Above did not exist with 3.8, but "import sys; print(sys.path)" showed dist-packages dirs.
+# So also checking if root as in when using Dockerfile
+if [ $(id -u) = 0 ] || [ -w "$PYTHON_PACKAGE_DIR" ]; then
+    $PYTHON_EXECUTABLE setup.py install
+    echo "Done installing Protobuf."
+else
     echo ""
     echo "*** PYTHON_PACKAGE_DIR=$PYTHON_PACKAGE_DIR"
     echo "*** Writing to PYTHON_PACKAGE_DIR requires sudo access."
@@ -99,6 +103,3 @@ if [ ! -w $PYTHON_PACKAGE_DIR ]; then
     echo "sudo $PYTHON_EXECUTABLE $PROTOBUF_DIR/python/setup.py install"
     exit 1
 fi
-
-$PYTHON_EXECUTABLE setup.py install
-echo "Done installing Protobuf."

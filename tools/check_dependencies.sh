@@ -56,6 +56,7 @@ if ! which python3 >&/dev/null; then
   echo ""
 fi
 
+echo "Check (command) dependencies"
 ################################################################################################
 # Check (command) dependencies
 ################################################################################################
@@ -68,6 +69,7 @@ done
 # Taken from Kaldi extras/check_dependencies.sh
 # Check zlib is installed
 ################################################################################################
+echo "Check zlib is installed"
 if ! echo "#include <zlib.h>" | $CXX -E - >&/dev/null; then
     echo ""
     echo "zlib is not installed."
@@ -85,14 +87,23 @@ fi
 #######################################################################################################
 # Define python executable to use
 #######################################################################################################
-PYTHON=$(which python)
-if [ -n "$1" ]; then
-    PYTHON="$1"
+echo "Define python executable to use"
+if command -v python >/dev/null 2>&1; then
+  PYTHON=$(which python)
+  if [ -n "$1" ]; then
+      PYTHON="$1"
+  fi
+else
+  echo ''
+  echo "Python not found."
+  echo ''
+  status=1
 fi
 
 ####################################################################
 # Checks python packages
 ####################################################################
+echo "Checks python packages"
 for c in ${PY_PKGS[@]}; do
     $PYTHON -c "import $c"
     if [ ! $? ]; then
@@ -104,6 +115,7 @@ for c in ${PY_PKGS[@]}; do
 done
 
 # Checks numpy version
+echo "Checks numpy version"
 $PYTHON -c "import numpy"
 if [ ! $? ]; then
     NV=$($PYTHON -c 'import numpy; print(numpy.__version__)' | cut -f2 -d\ ); NV=(${NV//./ })
