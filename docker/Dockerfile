@@ -93,7 +93,7 @@ RUN python setup.py bdist_wheel
 WORKDIR /pykaldi/tools
 
 # Source paths to libs and binaries
-RUN . path.sh
+RUN . ./path.sh
 
 # Test pykaldi
 RUN python -c "import kaldi; print(kaldi.__version__)"
