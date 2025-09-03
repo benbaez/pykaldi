@@ -5,6 +5,9 @@ FROM ubuntu:18.04
 
 ARG PY3_VER=3.7
 
+# Google Drive location of srilm 1.7.3 package
+ARG SRILM_G="https://drive.google.com/uc?id=1yW5r6cOdwPPjr-6kjsUcNmKK7MuWfBN9"
+
 # To avoid tzdata location prompt in Python 3.8 and later 
 ENV TZ="Etc/UTC"
 
@@ -31,6 +34,8 @@ RUN apt-get update \
     graphviz \
     libatlas3-base \
     libffi-dev \
+    liblbfgs-dev \
+    liblbfgsb-dev \
     libpython${PY3_VER}-dev \
     libtool \
     make \
@@ -61,6 +66,7 @@ RUN pip install --upgrade pip
 
 # Install necessary Python packages
 RUN pip install \
+    gdown \
     numpy \
     setuptools \
     pyparsing \
@@ -71,6 +77,21 @@ RUN pip install \
 COPY . /pykaldi
 
 WORKDIR /pykaldi/tools
+
+# SRILM for ngram-count tool
+# Following cannot be downloaded directly
+# wget http://www.speech.sri.com/projects/srilm/download/srilm-1.7.3.tar.gz
+# liblbfgs-dev library to support MaxEnt LMs
+RUN gdown ${SRILM_G} && \
+    mkdir srilm-1.7.3 && \
+    cd srilm-1.7.3 && \
+    tar -xzf ../srilm-1.7.3.tar.gz && \
+    SRILM=/pykaldi/tools/srilm-1.7.3 MACHINE_TYPE=x86_64 make World && \
+#   SRILM=/pykaldi/tools/srilm-1.7.3 MACHINE_TYPE=x86_64 make install && \
+    export PATH=$PATH:/pykaldi/tools/srilm-1.7.3/bin/i686-m64
+
+# OpenFST
+
 
 # ENV DEBIAN_FRONTEND=dialog
 
@@ -97,3 +118,18 @@ RUN . ./path.sh
 
 # Test pykaldi
 RUN python -c "import kaldi; print(kaldi.__version__)"
+
+# Add ngram-count to path
+RUN export PATH=/pykaldi/tools/srilm-1.7.3/bin/i686-m64:$PATH
+
+# Add fstcompile to path
+RUN export PATH=/pykaldi/tools/kaldi/tools/openfst-1.6.7/src/bin:$PATH
+
+# Add arpa2fst to path
+RUN export PATH=/pykaldi/tools/kaldi/src/lmbin:$PATH
+
+# Add fstaddselfloops to path
+RUN export PATH=/pykaldi/tools/kaldi/src/fstbin:$PATH
+
+# Add tree-info to path
+RUN export PATH=/pykaldi/tools/kaldi/src/bin:$PATH
