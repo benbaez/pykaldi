@@ -1,12 +1,22 @@
 # Dockerfile for building PyKaldi image from Ubuntu 18.04 image
 
-# docker build  --tag pykaldi/pykaldi -f Dockerfile ..
+# docker build  --tag pykaldi/pykaldi --build-arg SRILM_NAME=myname  \
+# --build-arg SRILM_ORG=myorg --build-arg SRILM_EMAIL=myemail \
+# --build-arg SRILM_ADDRESS=myaddress -f Dockerfile ..
 FROM ubuntu:18.04
 
-ARG PY3_VER=3.7
+# SRI Required infor for download of package
+ARG SRILM_NAME
+ARG SRILM_ORG
+ARG SRILM_EMAIL
+ARG SRILM_ADDRESS
 
-# Google Drive location of srilm 1.7.3 package
-ARG SRILM_G="https://drive.google.com/uc?id=1yW5r6cOdwPPjr-6kjsUcNmKK7MuWfBN9"
+RUN test -n "${SRILM_NAME}" || (echo "Error: SRILM_NAME must be set!" && exit 1)
+RUN test -n "${SRILM_ORG}" || (echo "Error: SRILM_ORG must be set!" && exit 1)
+RUN test -n "${SRILM_EMAIL}" || (echo "Error: SRILM_EMAIL must be set!" && exit 1)
+RUN test -n "${SRILM_ADDRESS}" || (echo "Error: SRILM_ADDRESS must be set!" && exit 1)
+
+ARG PY3_VER=3.7
 
 # To avoid tzdata location prompt in Python 3.8 and later 
 ENV TZ="Etc/UTC"
@@ -66,7 +76,6 @@ RUN pip install --upgrade pip
 
 # Install necessary Python packages
 RUN pip install \
-    gdown \
     numpy \
     setuptools \
     pyparsing \
@@ -78,21 +87,6 @@ COPY . /pykaldi
 
 WORKDIR /pykaldi/tools
 
-# SRILM for ngram-count tool
-# Following cannot be downloaded directly
-# wget http://www.speech.sri.com/projects/srilm/download/srilm-1.7.3.tar.gz
-# liblbfgs-dev library to support MaxEnt LMs
-RUN gdown ${SRILM_G} && \
-    mkdir srilm-1.7.3 && \
-    cd srilm-1.7.3 && \
-    tar -xzf ../srilm-1.7.3.tar.gz && \
-    SRILM=/pykaldi/tools/srilm-1.7.3 MACHINE_TYPE=x86_64 make World && \
-#   SRILM=/pykaldi/tools/srilm-1.7.3 MACHINE_TYPE=x86_64 make install && \
-    export PATH=$PATH:/pykaldi/tools/srilm-1.7.3/bin/i686-m64
-
-# OpenFST
-
-
 # ENV DEBIAN_FRONTEND=dialog
 
 RUN ./check_dependencies.sh
@@ -103,6 +97,11 @@ RUN ./install_protobuf.sh
 RUN ./install_clif.sh
 RUN ./install_kaldi.sh
 
+# SRILM for ngram-count tool
+WORKDIR /pykaldi/kaldi/tools
+RUN ./extras/install_srilm.sh SRILM_NAME SRILM_ORG SRILM_EMAIL SRILM_ADDRESS
+
+#
 WORKDIR /pykaldi
 
 # Install pykaldi
@@ -111,7 +110,7 @@ RUN python setup.py install
 # Create wheel package
 RUN python setup.py bdist_wheel
 
-# build srilm
+# Build srilm
 WORKDIR /pykaldi/tools/kaldi/tools
 RUN ./extras/install_srilm.sh
 
