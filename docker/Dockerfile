@@ -111,25 +111,19 @@ RUN python setup.py install
 # Create wheel package
 RUN python setup.py bdist_wheel
 
-WORKDIR /pykaldi/tools
+# build srilm
+WORKDIR /pykaldi/tools/kaldi/tools
+RUN ./extras/install_srilm.sh
 
 # Source paths to libs and binaries
-RUN . ./path.sh
+ENV KALDI_ROOT=kaldi
+
+ENV LD_LIBRARY_PATH=$KALDI_ROOT/src/lib:$KALDI_ROOT/tools/openfst-1.6.7/lib:$LD_LIBRARY_PATH
+
+ENV PATH=$KALDI_ROOT/src/lmbin/:$KALDI_ROOT/../kaldi_lm/:./utils/:$KALDI_ROOT/src/bin:$KALDI_ROOT/tools/openfst/bin:$KALDI_ROOT/src/fstbin/:$KALDI_ROOT/src/gmmbin/:$KALDI_ROOT/src/featbin/:$KALDI_ROOT/src/lm/:$KALDI_ROOT/src/sgmmbin/:$KALDI_ROOT/src/sgmm2bin/:$KALDI_ROOT/src/fgmmbin/:$KALDI_ROOT/src/latbin/:$KALDI_ROOT/src/nnetbin:$KALDI_ROOT/src/nnet2bin/:$KALDI_ROOT/src/online2bin/:$KALDI_ROOT/src/ivectorbin/:$KALDI_ROOT/src/kwsbin:$KALDI_ROOT/src/nnet3bin:$KALDI_ROOT/src/chainbin:$KALDI_ROOT/tools/sph2pipe_v2.5/:$KALDI_ROOT/src/rnnlmbin:.:$PATH
+
+# Add ngram-count to path
+ENV PATH=/pykaldi/tools/srilm-1.7.3/bin/i686-m64:$PATH
 
 # Test pykaldi
 RUN python -c "import kaldi; print(kaldi.__version__)"
-
-# Add ngram-count to path
-RUN export PATH=/pykaldi/tools/srilm-1.7.3/bin/i686-m64:$PATH
-
-# Add fstcompile to path
-RUN export PATH=/pykaldi/tools/kaldi/tools/openfst-1.6.7/src/bin:$PATH
-
-# Add arpa2fst to path
-RUN export PATH=/pykaldi/tools/kaldi/src/lmbin:$PATH
-
-# Add fstaddselfloops to path
-RUN export PATH=/pykaldi/tools/kaldi/src/fstbin:$PATH
-
-# Add tree-info to path
-RUN export PATH=/pykaldi/tools/kaldi/src/bin:$PATH
