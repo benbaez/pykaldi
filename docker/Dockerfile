@@ -85,6 +85,7 @@ RUN pip install \
 # Copy pykaldi directory into the container
 COPY . /pykaldi
 
+#
 WORKDIR /pykaldi/tools
 
 # ENV DEBIAN_FRONTEND=dialog
@@ -99,7 +100,7 @@ RUN ./install_kaldi.sh
 
 # SRILM for ngram-count tool
 WORKDIR /pykaldi/kaldi/tools
-RUN ./extras/install_srilm.sh SRILM_NAME SRILM_ORG SRILM_EMAIL SRILM_ADDRESS
+RUN ./install_srilm.sh ${SRILM_NAME} ${SRILM_ORG} ${SRILM_EMAIL} ${SRILM_ADDRESS}
 
 #
 WORKDIR /pykaldi
