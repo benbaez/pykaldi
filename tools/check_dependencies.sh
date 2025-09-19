@@ -44,13 +44,13 @@ PY_PKGS=( numpy setuptools pyparsing )
 ################################################################################################
 # Checks python binaries in system installation
 ################################################################################################
-if ! which python2.7 >&/dev/null; then
+if ! which python2.7 &>/dev/null; then
   echo ""
   echo "$0: python2.7 is not installed"
   echo ""
 fi
 
-if ! which python3 >&/dev/null; then
+if ! which python3 &>/dev/null; then
   echo ""
   echo "$0: python3 is not installed"
   echo ""
@@ -88,7 +88,7 @@ fi
 # Define python executable to use
 #######################################################################################################
 echo "Define python executable to use"
-if command -v python >/dev/null 2>&1; then
+if command -v python &>/dev/null; then
   PYTHON=$(which python)
   if [ -n "$1" ]; then
       PYTHON="$1"
